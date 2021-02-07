@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="guitarDrills.css">
+    <title>Tom's Guitar Drills</title>
+</head>
+<body>
+
+<h2>Tom's Guitar Drills</h2>
+<p/>
+
+<div class="tab">
+  <button class="tablinks" onclick="openTab(event, 'oneStringDom7')" id="defaultOpen">Single-String dom7</button>
+  <button class="tablinks" onclick="openTab(event, 'inversionDrill')">Inversions</button>
+</div>
+
+<div id="oneStringDom7" class="tabcontent">
+  <h3>Dominant 7th Appregios on One String</h3>
+    <p id="fb1"/>
+    <table>
+        <tr><td>Root:</td> <td><span id="rootNote"></span><td/></tr>
+        <tr><td>Last note played:</td> <td><span id="played">Played:</span></td> <td><button id="played" title="Show on fretboard" onclick="chordToneFB.showPlayed()">Show</button></td></tr>
+        <tr><td>Play the next note:</td> <td><span id="nextDegree"></span></td> <td><button title="Show on fretboard" onclick="chordToneFB.showNext()">Show</button></td></tr>
+    </table>
+    <p><button title="Refresh" onclick="chordToneFB.showChordTone()">Refresh</button>
+</div>
+
+<div id="inversionDrill" class="tabcontent">
+  <h3>Inversions</h3>
+    <p id="inversionDrillFB"/>
+    <p id="inversion">
+    <p><button title="Show" onclick="inversionFB.showInversion()">Show:</button>
+    <p><button title="Refresh" onclick="inversionFB.clear();inversionFB.selectInversion()">Refresh</button>
+    <p id="chordDrillPrompt"></p>
+</div>
+
+
+<script>
+function openTab(evt, cityName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(cityName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+
+
+    <script src="fretboard.js"></script>
+
+    <script>
+        const thirdInterval = 4;
+        const fourthInterval = 5;
+        const fifthInterval = 7;
+        const flatSeventhInterval = 10;
+        const octaveInterval = 12;
+
+        const highENotes = ["e4",  "f4",  "f#4", "g4",  "ab4", "a4",  "bb4", "b4",
+                            "c5",  "c#5", "d5",  "eb5", "e5",  "f5",  "f#5", "g5",
+                            "ab5", "a5",  "bb5",  "b5",  "c6", "c#6", "d6" ];
+
+        const bNotes =     ["b3",  "c4",  "c#4", "d4",  "eb4", "e4",  "f4",  "f#4",
+                            "g4",  "ab4", "a4",  "bb4", "b4",  "c5",  "c#5", "d5",
+                            "eb5", "e5",  "f5",  "f#5",  "g5", "g#5", "a5" ];
+
+        const gNotes =     ["g3",  "ab3", "a3",  "a#3", "b3",  "c4",  "c#4", "d4",
+                            "eb4", "e4",  "f4",  "f#4", "g4",  "ab4", "a4",  "bb4",
+                            "b4",  "c5",  "c#5", "d5",  "eb5", "e5",  "f5" ];
+
+        const dNotes =     ["d3",  "eb3", "e3",  "f3",  "f#3", "g3",  "ab3", "a3",
+                            "bb3", "b3",  "c4",  "c#4", "d4",  "eb4", "e4",  "f4",
+                            "f#4", "g4",  "ab4", "a4",  "bb4", "b4",  "c5" ];
+
+        const aNotes =     ["a2",  "bb2", "b2",  "c3",  "c#3", "d3",  "eb3", "e3",
+                            "f3",  "f#3", "g3",  "ab3", "a3",  "bb3", "b3",  "c4",
+                            "c#4", "d4",  "eb4", "e4",  "f4",  "f#4", "g4" ];
+
+        const lowENotes =  ["e2",  "f2",  "f#2", "g2",  "ab2", "a2",  "bb2", "b2",
+                            "c3",  "c#3", "d3",  "eb3", "e3",  "f3",  "f#3", "g3",
+                            "ab3", "a3",  "bb3", "b3",  "c4",  "c#4", "bb4" ];
+
+        const nFrets = highENotes.length;
+
+        const dom7Tones = [-12, -8,  -5, -2, 0, 4, 7, 10, 12 ];
+
+        const allFourthsInversions = [
+            {offsets:[0, -1, -3], noteColors: ["green", "red", "blue"]},
+            {offsets:[4,  2,  2], noteColors: ["red", "blue","green"]},
+            {offsets:[7,  7,  6], noteColors: ["blue", "green", "red"]}
+        ];
+
+        const dgbInversions = [
+            {offsets:[0, -1, -2], noteColors: ["green", "red", "blue"]},
+            {offsets:[4,  2,  3], noteColors: ["red", "blue","green"]},
+            {offsets:[7,  7,  7], noteColors: ["blue", "green", "red"]}
+        ];
+
+        const gbeInversions = [
+            {offsets:[0,  0, -2], noteColors: ["green", "red", "blue"]},
+            {offsets:[4,  3,  3], noteColors: ["red", "blue","green"]},
+            {offsets:[7,  8,  7], noteColors: ["blue", "green", "red"]}
+        ];
+
+        function FretboardController(where)  {
+
+            this.fb = fretboard.Fretboard( {
+                frets: nFrets,
+                where: where
+            });
+
+            this.strings = [null, highENotes, bNotes, gNotes, dNotes, aNotes, lowENotes];
+            this.stringNames = [null, "high E", "B", "G", "D", "A", "low E"];
+
+            this.inversions = [null, null, null, gbeInversions, dgbInversions, allFourthsInversions, allFourthsInversions];
+
+            this.addNote = function(note, color) {
+                this.fb.addNoteOnString(note, this.stringNum, color);
+                this.fb.where = where;
+                this.fb.paint();
+            };
+
+            this.clear = function() {
+                this.fb.clearNotes();
+            }
+
+            this.showChordTone = function() {
+                this.clear();
+                this.stringNum = getRandomElement([1,2,3,4,5,6]);
+                this.stringNotes = this.strings[this.stringNum];
+
+                // Root note
+                this.rootIndex = getRandomElement([0,1,2,3,4,5,6,7,8,9,11]);
+                this.rootNote = this.stringNotes[this.rootIndex]; 
+                this.addNote(this.rootNote, "green");
+
+                this.lastPlayedChord = getRandomElement(["I", "IV", "V"]);
+                this.lastTone = getRandomElement([1,3,5,7]);
+
+                this.nextChord = getRandomElement(["I", "IV", "V"]);
+                this.nextFret = this.getNextFretToPlay();
+
+                document.getElementById("rootNote").innerText = formatNote(this.rootNote, true);
+                document.getElementById("played").innerText =
+                    toneToDegree(this.lastTone) +
+                    " of " +
+                    this.lastPlayedChord +
+                    "7";
+                let ascOrDesc = this.nextFret > this.getLastPlayedFret() ? " (ascending)" : " (descending)";
+
+                document.getElementById("nextDegree").innerText = this.nextChord + "7" + ascOrDesc;
+                this.fb.paint();
+            }
+
+            this.getOffsetOfChord = function(chord) {
+
+                if (chord == "I") {
+                    return 0;
+                } else if (chord == "IV") {
+                    return fourthInterval;
+                } else if (chord  == "V") {
+                    return fifthInterval;
+                } else {
+                    throw "Not a chord: " + chord;
+                }
+            }
+
+            function toneToDegree(tone) {
+
+                switch(tone) {
+                    case 1:
+                        return "root";
+                    case 3:
+                        return "third degree";
+                    case 5:
+                        return "fifth degree";
+                    case 7:
+                        return "flat seven";
+                    default:
+                        return tone;
+                }
+            }
+
+            this.getLastPlayedFret = function () {
+                var lastPlayedFret = this.rootIndex +
+                    this.getOffsetOfChord(this.lastPlayedChord) + 
+                    this.toneToOffset(this.lastTone);
+
+                if (!this.isValidFret(lastPlayedFret)) {
+                    lastPlayedFret = lastPlayedFret - octaveInterval;
+                }
+
+                return lastPlayedFret;
+            }
+
+            /// @return a zero-based offset
+            /// to the fret that plays
+            /// the input chord tone.
+            this.toneToOffset = function (tone) {
+                if (tone == 1) {
+                    return 0;
+                } else if (tone == 3) {
+                    return 4;
+                } else if (tone == 5) {
+                    return 7;
+                } else if (tone == 7) {
+                    return 10;
+                } else {
+                    throw "Not a chord tone: " + tone;
+                }
+            }
+
+            this.showPlayed = function() {
+                let lastPlayedFret = this.getLastPlayedFret();
+                let lastPlayedNote = this.stringNotes[lastPlayedFret];
+                this.addNote(lastPlayedNote, "red");
+            }
+
+            this.isValidFret = function(fretNum) {
+                return fretNum > 0 && fretNum <= nFrets;
+            };
+
+            this.getNextFretToPlay = function() {
+                // Root of the next chord
+                let chordRoot = this.rootIndex + this.getOffsetOfChord(this.nextChord);
+                let lastPlayedFret = this.getLastPlayedFret();
+                var smallestInterval = 999;
+
+                for (const chordTone of dom7Tones) {
+                    let toneFret = (chordRoot + chordTone);
+
+                    if (toneFret != lastPlayedFret && this.isValidFret(toneFret)) {
+                        var interval = toneFret - lastPlayedFret;
+
+                        // Prefer ascending to descending
+                        // TODO: Make this more variable, and explicit.
+                        if (Math.abs(interval) <= Math.abs(smallestInterval)) {
+                            smallestInterval = interval;
+                        }
+                    }
+                }
+
+                return lastPlayedFret + smallestInterval;
+            }
+
+            this.showNext = function() {
+                let nextNote = this.stringNotes[this.nextFret];
+                this.addNote(nextNote, "blue");
+            }
+
+            this.selectInversion = function() {
+
+                // Select a root string and note; the inversion is expressed
+                // in terms of semitones from the "root fret" of that note.
+                this.rootString = getRandomElement([3, 4, 5, 6]);
+                this.rootFret = getRandomElement([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+                let rootNote = this.strings[this.rootString][this.rootFret];
+                let candidateInversions = this.inversions[this.rootString];
+
+                // Find an inversion that fits the selected root string/fret.
+                let candidateIndex = getRandomElement([0,1,2]);
+
+                for (i = 0; i < 3; i++) {
+                    let candidate = candidateInversions[candidateIndex];
+                    const allFretsValidP = (accumulator, currentValue) => accumulator && this.isValidFret(this.rootFret+currentValue);
+                    let foundInversion = candidate.offsets.reduce(allFretsValidP, true);
+
+                    if (foundInversion) {
+                        this.selectedInversion = candidate;
+                        break;
+                    } else {
+                        candidateIndex = candidateIndex == 2 ? 0: candidateIndex + 1;
+                    }
+                }
+
+                switch(candidateIndex) {
+                    case 0: promptString = "root postiton of ";break;
+                    case 1: promptString = "first inversion of ";break;
+                    case 2: promptString = "second inversion of ";break;
+                }
+
+                promptString = promptString + formatNote(rootNote, true);
+                promptString = promptString + " on ";
+                promptString = promptString + this.stringNames[this.rootString];
+                promptString = promptString +"," + this.stringNames[this.rootString - 1];
+                promptString = promptString +", and " + this.stringNames[this.rootString - 2];
+                document.getElementById("inversion").innerText = promptString;
+            }
+
+            this.showInversion = function() {
+                this.fb.clearNotes();
+
+                // The inversions are expressed as offsets from the root fret.
+                currentString = this.rootString;
+
+                for (i = 0; i < 3; i++) {
+                    currentFret = this.rootFret + this.selectedInversion.offsets[i];
+                    let stringNotes = this.strings[currentString];
+                    currentNote = stringNotes[currentFret];
+                    this.fb.addNoteOnString(currentNote, currentString, this.selectedInversion.noteColors[i]);
+                    currentString--;
+                }
+
+                this.fb.paint();
+            }
+        };
+
+        function getRandomInt(max) {
+          return Math.floor(Math.random() * Math.floor(max));
+        }
+
+        function getRandomElement(elements) {
+            var sz = elements.length;
+            return elements[getRandomInt(sz)];
+        }
+
+        function formatNote(note, isMajor) {
+            result = note.replace(/\d+/, "");
+
+            if (isMajor) {
+                result = result.substring(0,1).toUpperCase() + result.substring(1);
+            }
+
+            return result;
+        }
+
+        function chordDrill(aFretboard) {
+            aFretboard.showInversion();
+        }
+
+        // Entry point: construct fretboards, refresh to get started
+        var chordToneFB = new FretboardController("#fb1");
+        chordToneFB.showChordTone();
+        var inversionFB = new FretboardController("#inversionDrillFB");
+        inversionFB.selectInversion();
+        document.getElementById("defaultOpen").click();
+    </script>
+</body>
